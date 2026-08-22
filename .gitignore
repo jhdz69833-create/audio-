@@ -1,2 +1,21 @@
+To simulate vintage tape wow & flutter (or chorus/vibrato effects), modulate the delay line's delayTime AudioParam using one or more Low-Frequency Oscillators (LFOs).
+Modulating the delay time alters the read-head playback speed relative to the write head, inducing a continuous Doppler pitch shift:
+
+$$\Delta f = -f_0 \cdot \frac{d}{dt}\tau(t)$$
+where $\tau(t) = \tau_0 + A \sin(2\pi f_{\text{LFO}} t)$.
+Signal Routing & Parameter Differences
+Wow (Slow Drift): Low frequency ($0.2\text{ Hz} - 1.0\text{ Hz}$), higher amplitude ($\approx 1 - 5\text{ ms}$). Models motor speed fluctuations or uneven tape reels.
+Flutter (Fast Shimmer): Higher frequency ($4\text{ Hz} - 15\text{ Hz}$), very small amplitude ($\approx 0.1 - 0.8\text{ ms}$). Models capstan friction and mechanical vibration.
+
+
+
+Plaintext
+[ LFO 1: Wow (0.5 Hz) ] ───> [ Wow Gain (Depth: ±2ms) ] ────┐
+                                                             ├──> [ DelayNode.delayTime ]
+[ LFO 2: Flutter (6 Hz) ] ─> [ Flutter Gain (Depth: ±0.3ms) ]┘
+
+
+In the Web Audio API, connect the LFO output gain nodes directly to delayNode.delayTime.
+Updated Widget Specification with Tape Modulation
 # Google App Engine generated folder
 appengine-generated/
