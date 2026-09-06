@@ -1,0 +1,8 @@
+{
+  "name": "Tape Wow & Flutter Simulator",
+  "description": "Web Audio API simulation of vintage tape wow and flutter modulation with real-time audio synthesis, delay modulation, tape saturation, and visualizer.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": []
+}
