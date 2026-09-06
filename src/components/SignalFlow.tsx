@@ -1,16 +1,13 @@
 import React from 'react';
-import { TapeParameters, AudioEngineMetrics } from '../types';
-import { ArrowRight, Cpu, Sliders, Radio, Activity } from 'lucide-react';
+import { Cpu, Radio, Activity, ArrowRight } from 'lucide-react';
+import { TapeParameters, TapeMetrics } from '../types';
 
-interface SignalFlowDiagramProps {
+interface SignalFlowProps {
   params: TapeParameters;
-  metrics: AudioEngineMetrics;
+  metrics: TapeMetrics;
 }
 
-export const SignalFlowDiagram: React.FC<SignalFlowDiagramProps> = ({
-  params,
-  metrics,
-}) => {
+export const SignalFlow: React.FC<SignalFlowProps> = ({ params, metrics }) => {
   return (
     <div id="signal-flow-card" className="flex flex-col rounded-xl border border-stone-800 bg-stone-900/80 p-4 shadow-xl">
       <div className="mb-3 flex items-center justify-between">
@@ -26,14 +23,13 @@ export const SignalFlowDiagram: React.FC<SignalFlowDiagramProps> = ({
       </div>
 
       <div className="flex flex-col gap-3 rounded-lg border border-stone-800/80 bg-stone-950 p-3 text-xs">
-        {/* Modulation Subgraph (README specification highlight) */}
+        {/* LFO Modulation Matrix direct to DelayNode.delayTime */}
         <div className="relative rounded-md border border-amber-500/30 bg-amber-950/10 p-3">
           <div className="absolute -top-2.5 left-3 bg-stone-950 px-1.5 text-[10px] font-mono font-medium text-amber-400">
             LFO MODULATION MATRIX → DelayNode.delayTime
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-2 pt-1 text-[11px] font-mono">
-            {/* LFO 1: Wow */}
+            {/* Wow Source */}
             <div className="md:col-span-4 flex items-center justify-between rounded bg-stone-900 border border-stone-800 px-2.5 py-1.5">
               <div className="flex items-center gap-1.5">
                 <Radio className={`h-3 w-3 ${params.wowEnabled ? 'text-amber-400 animate-pulse' : 'text-stone-600'}`} />
@@ -56,20 +52,16 @@ export const SignalFlowDiagram: React.FC<SignalFlowDiagramProps> = ({
               <ArrowRight className="h-3 w-3" />
             </div>
 
-            {/* Summed Target AudioParam */}
+            {/* Shared Destination DelayNode.delayTime */}
             <div className="md:col-span-3 row-span-2 flex flex-col justify-center rounded border border-emerald-500/40 bg-emerald-950/20 p-2.5 text-center">
-              <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">
-                Target AudioParam
-              </span>
-              <span className="text-xs font-mono font-bold text-emerald-300 mt-0.5">
-                DelayNode.delayTime
-              </span>
+              <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold">Target AudioParam</span>
+              <span className="text-xs font-mono font-bold text-emerald-300 mt-0.5">DelayNode.delayTime</span>
               <span className="mt-1 text-[10px] text-stone-400">
                 Base: {params.baseDelay}ms (Curr: {metrics.currentDelayMs.toFixed(1)}ms)
               </span>
             </div>
 
-            {/* LFO 2: Flutter */}
+            {/* Flutter Source */}
             <div className="md:col-span-4 flex items-center justify-between rounded bg-stone-900 border border-stone-800 px-2.5 py-1.5">
               <div className="flex items-center gap-1.5">
                 <Activity className={`h-3 w-3 ${params.flutterEnabled ? 'text-cyan-400 animate-pulse' : 'text-stone-600'}`} />
@@ -94,19 +86,25 @@ export const SignalFlowDiagram: React.FC<SignalFlowDiagramProps> = ({
           </div>
         </div>
 
-        {/* Audio Path Chain */}
+        {/* Audio Path Pipeline Diagram */}
         <div className="flex flex-wrap items-center justify-between gap-1 rounded-md border border-stone-800/80 bg-stone-900/60 p-2 text-[10px] font-mono text-stone-400">
           <div className="rounded bg-stone-800 px-2 py-1 text-stone-200">Audio Source</div>
           <ArrowRight className="h-3 w-3 text-stone-600" />
-          <div className="rounded bg-stone-800 px-2 py-1 text-stone-200">Tape Saturation ({Math.round(params.saturation * 100)}%)</div>
+          <div className="rounded bg-stone-800 px-2 py-1 text-stone-200">
+            Tape Saturation ({Math.round(params.saturation * 100)}%)
+          </div>
           <ArrowRight className="h-3 w-3 text-stone-600" />
-          <div className="rounded bg-stone-800 px-2 py-1 text-stone-200">Head Filter ({Math.round(params.toneRollOff)}Hz)</div>
+          <div className="rounded bg-stone-800 px-2 py-1 text-stone-200">
+            Head Filter ({Math.round(params.toneRollOff)}Hz)
+          </div>
           <ArrowRight className="h-3 w-3 text-stone-600" />
           <div className="rounded border border-emerald-500/40 bg-emerald-950/40 px-2 py-1 text-emerald-300 font-semibold">
             Modulated DelayLine
           </div>
           <ArrowRight className="h-3 w-3 text-stone-600" />
-          <div className="rounded bg-stone-800 px-2 py-1 text-stone-200">Mixer ({Math.round(params.mix * 100)}% Wet)</div>
+          <div className="rounded bg-stone-800 px-2 py-1 text-stone-200">
+            Mixer ({Math.round(params.mix * 100)}% Wet)
+          </div>
           <ArrowRight className="h-3 w-3 text-stone-600" />
           <div className="rounded bg-amber-500/20 px-2 py-1 text-amber-300 font-semibold">Audio Output</div>
         </div>

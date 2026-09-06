@@ -1,11 +1,11 @@
 import React from 'react';
-import { PRESETS } from '../data/presets';
-import { Preset, TapeParameters } from '../types';
 import { Bookmark, Sparkles } from 'lucide-react';
+import { TapePreset } from '../types';
+import { TAPE_PRESETS } from '../data/presets';
 
 interface PresetSelectorProps {
   currentPresetId: string | null;
-  onSelectPreset: (preset: Preset) => void;
+  onSelectPreset: (preset: TapePreset) => void;
 }
 
 export const PresetSelector: React.FC<PresetSelectorProps> = ({
@@ -21,13 +21,11 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
             Acoustic & Hardware Profiles (Presets)
           </span>
         </div>
-        <span className="text-[11px] text-stone-500 font-mono">
-          Click any preset to audition
-        </span>
+        <span className="text-[11px] text-stone-500 font-mono">Click any preset to audition</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 pt-1">
-        {PRESETS.map(preset => {
+        {TAPE_PRESETS.map(preset => {
           const isSelected = currentPresetId === preset.id;
           return (
             <button

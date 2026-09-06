@@ -2,9 +2,9 @@
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
   }
-  code, kbd, samp, pre {
+  code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
 }

@@ -1,18 +1,18 @@
 import React from 'react';
-import { TapeParameters, LfoWaveform } from '../types';
-import { Sliders, Radio, Activity, Volume2, Flame, Gauge, Disc } from 'lucide-react';
+import { Radio, Activity, Disc, Flame, Volume2 } from 'lucide-react';
+import { TapeParameters, WaveformType } from '../types';
 
 interface TapeControlsProps {
   params: TapeParameters;
-  onChange: (updated: Partial<TapeParameters>) => void;
+  onChange: (patch: Partial<TapeParameters>) => void;
 }
 
 export const TapeControls: React.FC<TapeControlsProps> = ({ params, onChange }) => {
-  const waveforms: LfoWaveform[] = ['sine', 'triangle', 'sawtooth', 'square'];
+  const waveforms: WaveformType[] = ['sine', 'triangle', 'sawtooth', 'square'];
 
   return (
     <div id="tape-controls" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {/* SECTION 1: LFO 1 - WOW (Slow Drift) */}
+      {/* LFO 1: WOW (Slow Drift) */}
       <div className="flex flex-col rounded-xl border border-stone-800 bg-stone-900/80 p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between border-b border-stone-800 pb-2">
           <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export const TapeControls: React.FC<TapeControlsProps> = ({ params, onChange }) 
         </div>
       </div>
 
-      {/* SECTION 2: LFO 2 - FLUTTER (Fast Shimmer) */}
+      {/* LFO 2: FLUTTER (Fast Shimmer) */}
       <div className="flex flex-col rounded-xl border border-stone-800 bg-stone-900/80 p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between border-b border-stone-800 pb-2">
           <div className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export const TapeControls: React.FC<TapeControlsProps> = ({ params, onChange }) 
         </div>
       </div>
 
-      {/* SECTION 3: DELAY LINE & TAPE SATURATION */}
+      {/* DELAY LINE & TAPE COLOR */}
       <div className="flex flex-col rounded-xl border border-stone-800 bg-stone-900/80 p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between border-b border-stone-800 pb-2">
           <div className="flex items-center gap-2">
@@ -213,7 +213,7 @@ export const TapeControls: React.FC<TapeControlsProps> = ({ params, onChange }) 
           </button>
         </div>
 
-        {/* Base Delay Time */}
+        {/* Base Delay */}
         <div className="mb-3">
           <div className="mb-1 flex items-center justify-between text-xs">
             <span className="text-stone-400">Base Delay (τ₀):</span>
@@ -239,7 +239,7 @@ export const TapeControls: React.FC<TapeControlsProps> = ({ params, onChange }) 
           <div className="mb-1 flex items-center justify-between text-xs">
             <span className="text-stone-400">Dry / Wet Mix:</span>
             <span className="font-mono text-stone-300">
-              {params.mix === 1 ? '100% Wet (Vibrato)' : `${Math.round(params.mix * 100)}% Wet`}
+              {params.mix === 1.0 ? '100% Wet (Vibrato)' : `${Math.round(params.mix * 100)}% Wet`}
             </span>
           </div>
           <input
@@ -275,7 +275,7 @@ export const TapeControls: React.FC<TapeControlsProps> = ({ params, onChange }) 
           />
         </div>
 
-        {/* Saturation & Tone */}
+        {/* Saturation & Tone Filter */}
         <div className="grid grid-cols-2 gap-3 pt-1 border-t border-stone-800">
           <div>
             <div className="mb-1 flex items-center justify-between text-xs">
@@ -323,11 +323,10 @@ export const TapeControls: React.FC<TapeControlsProps> = ({ params, onChange }) 
               max="0.2"
               step="0.01"
               value={params.tapeHiss}
-              onChange={e => onChange({ tapeHiss: parseFloat(e.target.value) })}
+              onChange={e => onChange({tapeHiss: parseFloat(e.target.value)})}
               className="w-20 accent-stone-400 cursor-pointer"
             />
           </div>
-
           <label className="flex items-center gap-1.5 cursor-pointer text-stone-300">
             <input
               type="checkbox"

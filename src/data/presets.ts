@@ -1,6 +1,27 @@
-import { Preset } from '../types';
+import { TapePreset, TapeParameters } from '../types';
 
-export const PRESETS: Preset[] = [
+export const DEFAULT_PARAMETERS: TapeParameters = {
+  wowFreq: 0.5,
+  wowDepth: 2.0,
+  wowWaveform: 'sine',
+  wowEnabled: true,
+  flutterFreq: 6.0,
+  flutterDepth: 0.3,
+  flutterWaveform: 'sine',
+  flutterEnabled: true,
+  baseDelay: 35,
+  feedback: 0.15,
+  mix: 0.75,
+  saturation: 0.35,
+  toneRollOff: 8000,
+  tapeHiss: 0.03,
+  dropouts: true,
+  outputGain: 1.0,
+  isBypassed: false,
+  motorSpeed: 1.0,
+};
+
+export const TAPE_PRESETS: TapePreset[] = [
   {
     id: 'studio-reel',
     name: 'Mastering Reel-to-Reel',

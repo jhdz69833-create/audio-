@@ -1,14 +1,14 @@
 import React, { useRef } from 'react';
+import { Play, Square, Music, Radio, Drum, Upload, Mic } from 'lucide-react';
 import { AudioSourceType } from '../types';
-import { TapeAudioEngine } from '../audio/tapeEngine';
-import { Music, Radio, Drum, Upload, Mic, Play, Square } from 'lucide-react';
+import { AudioEngine } from '../audio/AudioEngine';
 
 interface AudioSourceBarProps {
   currentSource: AudioSourceType;
-  onSelectSource: (type: AudioSourceType) => void;
+  onSelectSource: (src: AudioSourceType) => void;
   isPlaying: boolean;
   onTogglePlay: () => void;
-  engine: TapeAudioEngine | null;
+  engine: AudioEngine | null;
 }
 
 export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
@@ -32,8 +32,8 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
     { label: 'D4', freq: 293.66 },
     { label: 'E4', freq: 329.63 },
     { label: 'F4', freq: 349.23 },
-    { label: 'G4', freq: 392.00 },
-    { label: 'A4', freq: 440.00 },
+    { label: 'G4', freq: 392.0 },
+    { label: 'A4', freq: 440.0 },
     { label: 'B4', freq: 493.88 },
     { label: 'C5', freq: 523.25 },
   ];
@@ -41,7 +41,7 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
   return (
     <div id="audio-source-bar" className="flex flex-col gap-3 rounded-xl border border-stone-800 bg-stone-900/80 p-4 shadow-xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Play/Stop Master Button */}
+        {/* Main Transport Play / Stop Button */}
         <div className="flex items-center gap-3">
           <button
             id="btn-master-play"
@@ -64,13 +64,12 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
               </>
             )}
           </button>
-
           <span className="text-xs text-stone-400">
             {isPlaying ? 'Tape transport actively rolling' : 'Click to start playback'}
           </span>
         </div>
 
-        {/* Source Switcher */}
+        {/* Source Selector Tabs */}
         <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-stone-800 bg-stone-950 p-1 text-xs">
           <button
             onClick={() => onSelectSource('synth')}
@@ -82,7 +81,6 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
             <Music className="h-3.5 w-3.5" />
             Lo-Fi Rhodes
           </button>
-
           <button
             onClick={() => onSelectSource('tone')}
             className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition-colors ${
@@ -93,7 +91,6 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
             <Radio className="h-3.5 w-3.5" />
             440Hz Sine Tone
           </button>
-
           <button
             onClick={() => onSelectSource('noise')}
             className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition-colors ${
@@ -104,7 +101,6 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
             <Drum className="h-3.5 w-3.5" />
             Tape Rhythm
           </button>
-
           <button
             onClick={() => fileInputRef.current?.click()}
             className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition-colors ${
@@ -115,7 +111,6 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
             <Upload className="h-3.5 w-3.5" />
             Audio File
           </button>
-
           <button
             onClick={() => onSelectSource('mic')}
             className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition-colors ${
@@ -126,7 +121,6 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
             <Mic className="h-3.5 w-3.5" />
             Microphone
           </button>
-
           <input
             type="file"
             ref={fileInputRef}
@@ -137,11 +131,9 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
         </div>
       </div>
 
-      {/* Manual Piano Audition Keys */}
+      {/* Piano Keys for instant auditioning */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-stone-800/80 pt-2 text-xs">
-        <span className="text-[11px] font-mono text-stone-400">
-          Manual Audition Keys:
-        </span>
+        <span className="text-[11px] font-mono text-stone-400">Manual Audition Keys:</span>
         <div className="flex items-center gap-1">
           {manualNotes.map(n => (
             <button

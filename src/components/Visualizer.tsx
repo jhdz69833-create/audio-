@@ -1,27 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { TapeParameters, AudioEngineMetrics } from '../types';
-import { TapeAudioEngine } from '../audio/tapeEngine';
-import { Waves, BarChart2, Zap } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Waves, Zap, BarChart3 } from 'lucide-react';
+import { TapeParameters, TapeMetrics } from '../types';
+import { AudioEngine } from '../audio/AudioEngine';
 
-interface ModulationPlotProps {
+interface VisualizerProps {
   params: TapeParameters;
-  metrics: AudioEngineMetrics;
-  engine: TapeAudioEngine | null;
+  metrics: TapeMetrics;
+  engine: AudioEngine | null;
 }
 
-export const ModulationPlot: React.FC<ModulationPlotProps> = ({
-  params,
-  metrics,
-  engine,
-}) => {
+export const Visualizer: React.FC<VisualizerProps> = ({ params, metrics, engine }) => {
   const [viewMode, setViewMode] = useState<'lfo' | 'oscilloscope' | 'spectrum'>('lfo');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const timeRef = useRef(0);
+  const phaseRef = useRef(0);
 
   useEffect(() => {
-    let animationFrameId: number;
-    const waveformData = new Uint8Array(512);
-    const frequencyData = new Uint8Array(256);
+    let animId: number;
+    const waveData = new Uint8Array(512);
+    const freqData = new Uint8Array(256);
 
     const render = () => {
       const canvas = canvasRef.current;
@@ -29,150 +25,120 @@ export const ModulationPlot: React.FC<ModulationPlotProps> = ({
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      const width = canvas.width;
-      const height = canvas.height;
-      timeRef.current += 0.025;
+      const w = canvas.width;
+      const h = canvas.height;
 
-      ctx.clearRect(0, 0, width, height);
+      phaseRef.current += 0.025;
 
-      // Dark oscilloscope screen background
+      ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = '#0c0a09';
-      ctx.fillRect(0, 0, width, height);
+      ctx.fillRect(0, 0, w, h);
 
-      // Oscilloscope grid lines
+      // Grid lines
       ctx.strokeStyle = '#1c1917';
       ctx.lineWidth = 1;
-
-      // Vertical divisions
-      for (let x = 0; x < width; x += 40) {
+      for (let x = 0; x < w; x += 40) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
+        ctx.lineTo(x, h);
         ctx.stroke();
       }
-
-      // Horizontal divisions
-      for (let y = 0; y < height; y += 30) {
+      for (let y = 0; y < h; y += 30) {
         ctx.beginPath();
         ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
+        ctx.lineTo(w, y);
         ctx.stroke();
       }
 
-      // Center crosshairs
+      // Center baseline
       ctx.strokeStyle = '#292524';
       ctx.beginPath();
-      ctx.moveTo(0, height / 2);
-      ctx.lineTo(width, height / 2);
+      ctx.moveTo(0, h / 2);
+      ctx.lineTo(w, h / 2);
       ctx.stroke();
 
       if (viewMode === 'lfo') {
-        // Render Delay Time Modulation curve: \tau(t) = \tau_0 + A_1 sin(2\pi f_1 t) + A_2 sin(2\pi f_2 t)
-        const centerY = height / 2;
-        const wowAmp = params.wowEnabled ? params.wowDepth : 0;
-        const flutterAmp = params.flutterEnabled ? params.flutterDepth : 0;
-        const t0 = timeRef.current;
+        const midY = h / 2;
+        const wDepth = params.wowEnabled ? params.wowDepth : 0;
+        const fDepth = params.flutterEnabled ? params.flutterDepth : 0;
+        const phase = phaseRef.current;
 
-        // Trace 1: Delay Time Modulation \tau(t) in Amber
+        // Draw Delay Modulation Waveform (Amber)
         ctx.beginPath();
         ctx.strokeStyle = '#f59e0b';
         ctx.lineWidth = 2;
-
-        for (let x = 0; x < width; x++) {
-          const simTime = t0 + (x / width) * 2.5; // 2.5 second window
-          const wowVal = wowAmp * Math.sin(2 * Math.PI * params.wowFreq * params.motorSpeed * simTime);
-          const flutterVal = flutterAmp * Math.sin(2 * Math.PI * params.flutterFreq * params.motorSpeed * simTime);
-          const totalMs = wowVal + flutterVal;
-
-          // Scale ms to pixels (e.g. +/- 6 ms range mapped to canvas)
-          const y = centerY - (totalMs / 6) * (height * 0.38);
-
+        for (let x = 0; x < w; x++) {
+          const t = phase + (x / w) * 2.5;
+          const wow = wDepth * Math.sin(2 * Math.PI * params.wowFreq * params.motorSpeed * t);
+          const flutter = fDepth * Math.sin(2 * Math.PI * params.flutterFreq * params.motorSpeed * t);
+          const total = wow + flutter;
+          const y = midY - (total / 6.0) * (h * 0.38);
           if (x === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
 
-        // Trace 2: Doppler Shift Rate d\tau / dt in Cyan/Teal
+        // Draw Doppler Shift Derivative (Cyan dashed line)
         ctx.beginPath();
         ctx.strokeStyle = '#06b6d4';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([3, 3]);
-
-        for (let x = 0; x < width; x++) {
-          const simTime = t0 + (x / width) * 2.5;
-          const d_wow = (wowAmp / 1000) * (2 * Math.PI * params.wowFreq) * Math.cos(2 * Math.PI * params.wowFreq * simTime);
-          const d_flutter = (flutterAmp / 1000) * (2 * Math.PI * params.flutterFreq) * Math.cos(2 * Math.PI * params.flutterFreq * simTime);
-          const pitchCents = -1731 * (d_wow + d_flutter);
-
-          const y = centerY - (pitchCents / 45) * (height * 0.38);
+        for (let x = 0; x < w; x++) {
+          const t = phase + (x / w) * 2.5;
+          const dWow = (wDepth / 1000) * (2 * Math.PI * params.wowFreq) * Math.cos(2 * Math.PI * params.wowFreq * t);
+          const dFlutter = (fDepth / 1000) * (2 * Math.PI * params.flutterFreq) * Math.cos(2 * Math.PI * params.flutterFreq * t);
+          const cents = -1731 * (dWow + dFlutter);
+          const y = midY - (cents / 45.0) * (h * 0.38);
           if (x === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Real-time cursor dot at current t
-        const currentY = centerY - (metrics.totalModulationMs / 6) * (height * 0.38);
+        // Live point indicator
+        const currentY = midY - (metrics.totalModulationMs / 6.0) * (h * 0.38);
         ctx.beginPath();
         ctx.arc(12, currentY, 4, 0, Math.PI * 2);
         ctx.fillStyle = '#f59e0b';
         ctx.fill();
         ctx.strokeStyle = '#fff';
         ctx.stroke();
-
       } else if (viewMode === 'oscilloscope') {
-        // Live Audio Time-domain Waveform
-        if (engine) {
-          engine.getWaveformData(waveformData);
-        }
-
+        if (engine) engine.getWaveformData(waveData);
         ctx.beginPath();
         ctx.strokeStyle = '#10b981';
         ctx.lineWidth = 2;
-
-        const sliceWidth = width / waveformData.length;
+        const sliceWidth = w / waveData.length;
         let x = 0;
-
-        for (let i = 0; i < waveformData.length; i++) {
-          const v = waveformData[i] / 128.0; // 0 to 2
-          const y = (v * height) / 2;
-
+        for (let i = 0; i < waveData.length; i++) {
+          const v = waveData[i] / 128.0;
+          const y = (v * h) / 2;
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
-
           x += sliceWidth;
         }
         ctx.stroke();
-
       } else if (viewMode === 'spectrum') {
-        // Frequency Spectrum FFT
-        if (engine) {
-          engine.getFrequencyData(frequencyData);
-        }
-
-        const barWidth = (width / frequencyData.length) * 1.6;
+        if (engine) engine.getFrequencyData(freqData);
+        const barWidth = (w / freqData.length) * 1.6;
         let x = 0;
-
-        for (let i = 0; i < frequencyData.length; i++) {
-          const barHeight = (frequencyData[i] / 255) * height;
-
-          const grad = ctx.createLinearGradient(0, height, 0, height - barHeight);
+        for (let i = 0; i < freqData.length; i++) {
+          const barHeight = (freqData[i] / 255) * h;
+          const grad = ctx.createLinearGradient(0, h, 0, h - barHeight);
           grad.addColorStop(0, '#f59e0b');
           grad.addColorStop(1, '#ef4444');
-
           ctx.fillStyle = grad;
-          ctx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
-
+          ctx.fillRect(x, h - barHeight, barWidth - 1, barHeight);
           x += barWidth;
-          if (x > width) break;
+          if (x > w) break;
         }
       }
 
-      animationFrameId = requestAnimationFrame(render);
+      animId = requestAnimationFrame(render);
     };
 
     render();
-    return () => cancelAnimationFrame(animationFrameId);
+    return () => cancelAnimationFrame(animId);
   }, [viewMode, params, metrics, engine]);
 
   return (
@@ -180,11 +146,8 @@ export const ModulationPlot: React.FC<ModulationPlotProps> = ({
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Waves className="h-4 w-4 text-amber-500" />
-          <span className="text-xs font-semibold tracking-wider uppercase text-stone-300">
-            Oscilloscope & Modulation Analysis
-          </span>
+          <span className="text-xs font-semibold tracking-wider uppercase text-stone-300">Oscilloscope & Modulation Analysis</span>
         </div>
-
         <div className="flex items-center rounded-lg border border-stone-800 bg-stone-950 p-0.5 text-xs">
           <button
             onClick={() => setViewMode('lfo')}
@@ -210,22 +173,14 @@ export const ModulationPlot: React.FC<ModulationPlotProps> = ({
               viewMode === 'spectrum' ? 'bg-rose-500/20 text-rose-300 font-medium' : 'text-stone-400 hover:text-stone-200'
             }`}
           >
-            <BarChart2 className="h-3 w-3" />
+            <BarChart3 className="h-3 w-3" />
             Spectrum
           </button>
         </div>
       </div>
 
-      {/* Screen Canvas */}
       <div className="relative aspect-[2.4/1] w-full overflow-hidden rounded-lg bg-stone-950 border border-stone-800">
-        <canvas
-          ref={canvasRef}
-          width={600}
-          height={250}
-          className="h-full w-full object-contain"
-        />
-
-        {/* Legend */}
+        <canvas ref={canvasRef} width={600} height={250} className="h-full w-full object-contain" />
         {viewMode === 'lfo' && (
           <div className="absolute bottom-2 left-2 flex items-center gap-3 rounded bg-stone-900/90 px-2 py-1 text-[10px] font-mono backdrop-blur-sm border border-stone-800">
             <span className="flex items-center gap-1 text-amber-400">
@@ -240,7 +195,6 @@ export const ModulationPlot: React.FC<ModulationPlotProps> = ({
         )}
       </div>
 
-      {/* Formula Explanation Callout directly from README */}
       <div className="mt-3 rounded-lg border border-stone-800/80 bg-stone-950/60 p-2.5 text-xs text-stone-400">
         <div className="font-mono text-[11px] text-amber-300/90">
           Δf = -f₀ · (d/dt)τ(t) &nbsp;|&nbsp; τ(t) = τ₀ + A_wow·sin(2πf₁t) + A_flutter·sin(2πf₂t)
