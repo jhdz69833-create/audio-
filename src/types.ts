@@ -1,6 +1,12 @@
 export type WaveformType = 'sine' | 'triangle' | 'sawtooth' | 'square';
 
-export type AudioSourceType = 'synth' | 'tone' | 'noise' | 'file' | 'mic';
+export type AudioSourceType = 'synth' | 'tone' | 'noise' | 'file' | 'mic' | 'drive';
+
+export interface DriveAudioInfo {
+  id: string;
+  name: string;
+  size?: string;
+}
 
 export interface TapeParameters {
   wowFreq: number; // Hz (0.1 - 2.0 Hz)

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Play, Square, Music, Radio, Drum, Upload, Mic } from 'lucide-react';
+import { Play, Square, Music, Radio, Drum, Upload, Mic, HardDrive } from 'lucide-react';
 import { AudioSourceType } from '../types';
 import { AudioEngine } from '../audio/AudioEngine';
 
@@ -9,6 +9,8 @@ interface AudioSourceBarProps {
   isPlaying: boolean;
   onTogglePlay: () => void;
   engine: AudioEngine | null;
+  onOpenDrive: () => void;
+  driveFileName?: string | null;
 }
 
 export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
@@ -17,6 +19,8 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
   isPlaying,
   onTogglePlay,
   engine,
+  onOpenDrive,
+  driveFileName,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -110,6 +114,23 @@ export const AudioSourceBar: React.FC<AudioSourceBarProps> = ({
           >
             <Upload className="h-3.5 w-3.5" />
             Audio File
+          </button>
+          <button
+            onClick={() => {
+              onOpenDrive();
+            }}
+            className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition-colors ${
+              currentSource === 'drive' ? 'bg-amber-500/20 text-amber-300 font-medium' : 'text-stone-400 hover:text-stone-200'
+            }`}
+            title="Browse and load audio files from Google Drive"
+          >
+            <HardDrive className="h-3.5 w-3.5 text-amber-400" />
+            <span>Google Drive</span>
+            {driveFileName && currentSource === 'drive' && (
+              <span className="max-w-[100px] truncate text-[10px] font-mono text-amber-300/80">
+                ({driveFileName})
+              </span>
+            )}
           </button>
           <button
             onClick={() => onSelectSource('mic')}

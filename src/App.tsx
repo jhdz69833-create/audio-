@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Disc, HelpCircle } from 'lucide-react';
+import { Disc, HelpCircle, HardDrive } from 'lucide-react';
+import { User } from 'firebase/auth';
 import { TapeParameters, TapeMetrics, AudioSourceType, TapePreset } from './types';
 import { AudioEngine } from './audio/AudioEngine';
 import { DEFAULT_PARAMETERS } from './data/presets';
@@ -9,12 +10,17 @@ import { SignalFlow } from './components/SignalFlow';
 import { AudioSourceBar } from './components/AudioSourceBar';
 import { TapeControls } from './components/TapeControls';
 import { PresetSelector } from './components/PresetSelector';
+import { GoogleDriveModal } from './components/GoogleDriveModal';
+import { initAuth } from './lib/auth';
 
 export default function App() {
   const [params, setParams] = useState<TapeParameters>(DEFAULT_PARAMETERS);
   const [source, setSource] = useState<AudioSourceType>('synth');
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentPresetId, setCurrentPresetId] = useState<string | null>('worn-cassette');
+  const [isDriveModalOpen, setIsDriveModalOpen] = useState<boolean>(false);
+  const [loadedDriveFile, setLoadedDriveFile] = useState<{ id: string; name: string } | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const [metrics, setMetrics] = useState<TapeMetrics>({
     currentDelayMs: 35,
     wowOffsetMs: 0,
@@ -37,9 +43,15 @@ export default function App() {
       }
     }, 33);
 
+    const unsubscribeAuth = initAuth(
+      user => setAuthUser(user),
+      () => setAuthUser(null)
+    );
+
     return () => {
       clearInterval(interval);
       eng.stopAudio();
+      unsubscribeAuth();
     };
   }, []);
 
@@ -73,10 +85,20 @@ export default function App() {
   }, [isPlaying]);
 
   const handleSelectSource = useCallback(async (newSource: AudioSourceType) => {
+    if (newSource === 'drive') {
+      setIsDriveModalOpen(true);
+      return;
+    }
     setSource(newSource);
     if (engineRef.current) {
       await engineRef.current.setSourceType(newSource);
     }
+  }, []);
+
+  const handleDriveFileLoaded = useCallback((fileInfo: { id: string; name: string }) => {
+    setLoadedDriveFile(fileInfo);
+    setSource('drive');
+    setIsPlaying(true);
   }, []);
 
   const handleToggleTapeStop = useCallback(() => {
@@ -111,6 +133,21 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+            {/* Google Drive Status Button in Header */}
+            <button
+              id="btn-header-drive"
+              onClick={() => setIsDriveModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-stone-800 bg-stone-900 hover:bg-stone-800 hover:border-amber-500/40 px-3 py-1.5 text-xs text-stone-300 transition-colors cursor-pointer"
+              title="Open Google Drive Audio Explorer"
+            >
+              <HardDrive className="h-3.5 w-3.5 text-amber-400" />
+              <span>{authUser ? (authUser.displayName || 'Google Drive') : 'Google Drive'}</span>
+              <span
+                className={`h-2 w-2 rounded-full ${authUser ? 'bg-emerald-400' : 'bg-stone-600'}`}
+                title={authUser ? 'Google Drive Connected' : 'Not Connected'}
+              />
+            </button>
+
             <div className="rounded-lg border border-stone-800 bg-stone-900 px-3 py-1.5 flex items-center gap-2">
               <span className="text-stone-500">Base Delay:</span>
               <span className="text-stone-200">{params.baseDelay}ms</span>
@@ -145,6 +182,8 @@ export default function App() {
           isPlaying={isPlaying}
           onTogglePlay={handleTogglePlay}
           engine={engineRef.current}
+          onOpenDrive={() => setIsDriveModalOpen(true)}
+          driveFileName={loadedDriveFile?.name || null}
         />
 
         {/* Dual Deck Visuals: Reel Transport & Modulation Oscilloscope */}
@@ -179,6 +218,14 @@ export default function App() {
           </p>
         </footer>
       </div>
+
+      {/* Google Drive Modal */}
+      <GoogleDriveModal
+        isOpen={isDriveModalOpen}
+        onClose={() => setIsDriveModalOpen(false)}
+        engine={engineRef.current}
+        onFileLoaded={handleDriveFileLoaded}
+      />
     </div>
   );
 }

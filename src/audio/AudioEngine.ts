@@ -316,6 +316,7 @@ export class AudioEngine {
         this.startTestTone();
         break;
       case 'file':
+      case 'drive':
         this.startUserFile();
         break;
       case 'mic':
@@ -532,6 +533,14 @@ export class AudioEngine {
     const arr = await file.arrayBuffer();
     this.userAudioBuffer = await this.ctx.decodeAudioData(arr);
     this.setSourceType('file');
+  }
+
+  async loadDriveAudioData(arrayBuffer: ArrayBuffer): Promise<void> {
+    await this.init();
+    if (!this.ctx) return;
+    const copy = arrayBuffer.slice(0);
+    this.userAudioBuffer = await this.ctx.decodeAudioData(copy);
+    await this.setSourceType('drive');
   }
 
   startUserFile(): void {
